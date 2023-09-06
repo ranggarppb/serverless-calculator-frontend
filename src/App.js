@@ -170,6 +170,10 @@ function App() {
       <DigitButton digit="8" dispatch={dispatch} />
       <DigitButton digit="9" dispatch={dispatch} />
       <OperationButton operation="-" dispatch={dispatch} />
+	  <DigitButton digit="|x|" dispatch={dispatch} />
+      <DigitButton digit="-x" dispatch={dispatch} />
+      <DigitButton digit="x²" dispatch={dispatch} />
+      <OperationButton operation="√x" dispatch={dispatch} />
       <DigitButton digit="." dispatch={dispatch} />
       <DigitButton digit="0" dispatch={dispatch} />
       <button
