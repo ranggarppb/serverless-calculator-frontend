@@ -12,7 +12,6 @@ export const ACTIONS = {
 }
 
 function reducer(state, { type, payload }) {
-	let res
 	switch (type) {
     case ACTIONS.ADD_DIGIT:
 		if (state.overwrite) {
@@ -29,30 +28,36 @@ function reducer(state, { type, payload }) {
 			return state
 		}
 
-      	res =  {
-			...state,
-			currentOperand: `${state.currentOperand || ""}${payload.digit}`,
-	  	}
-
 	  	if (state.operation) {
 			const newListOperation = [...state.listOperation]
 			newListOperation.push(state.operation)
-			state.listOperation = newListOperation
-			state.operation = null
+			return {
+				...state,
+				currentOperand: `${state.currentOperand || ""}${payload.digit}`,
+				listOperation: newListOperation,
+				operation: null
+			  }
+		} else {
+			return {
+				...state,
+				currentOperand: `${state.currentOperand || ""}${payload.digit}`,
+			  }
 		}
-
-	  	return res
-      
     case ACTIONS.ADD_OPERATION:
-		res = {
-			...state,
-        	operation: payload.operation,
-		}
 		if (state.currentOperand) {
-			state.listOperand.push(state.currentOperand)
-			state.currentOperand = null
+			const newListOperand = [...state.listOperand, state.currentOperand]
+			return {
+				...state,
+				operation: payload.operation,
+				listOperand: newListOperand,
+				currentOperand: null
+			}
+		} else {
+			return {
+				...state,
+				operation: payload.operation,
+			}
 		}
-		return res
     case ACTIONS.CLEAR:
       	return {currentOperand: 0, listOperand: [], listOperation: []}
     case ACTIONS.DELETE_DIGIT:
@@ -100,6 +105,8 @@ function evaluate(currentOperand, operation, listOperand, listOperation, calcula
 	if (calculationResult) {
 		return calculationResult
 	}
+
+	console.log(currentOperand, operation, listOperand, listOperation)
 
 	let res = []
 	for (let i = 0; i < listOperand.length; i++) {
