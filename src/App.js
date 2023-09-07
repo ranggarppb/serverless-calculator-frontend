@@ -47,13 +47,22 @@ function reducer(state, { type, payload }) {
 			  }
 		}
     case ACTIONS.ADD_OPERATION:
-		if (state.currentOperand || state.currentOperand === 0) {
+		if (state.currentOperand || (state.currentOperand === 0 && !state.calculationResult)) {
 			const newListOperand = [...state.listOperand, state.currentOperand]
 			return {
 				...state,
 				operation: payload.operation,
 				listOperand: newListOperand,
 				currentOperand: null
+			}
+		} else if (state.calculationResult) {
+			return {
+				...state,
+				overwrite: false,
+				operation: payload.operation,
+				currentOperand: null,
+				listOperand: [state.calculationResult],
+				calculationResult: null
 			}
 		} else {
 			return {
@@ -95,7 +104,9 @@ function reducer(state, { type, payload }) {
 			overwrite: true,
 			operation: null,
 			currentOperand: 0,
-			calculationResult: payload.calculationResult
+			calculationResult: payload.calculationResult,
+			listOperand: [],
+			listOperation: []
 		}
 	case ACTIONS.OPERATION_EVALUATE:
 		  return {
