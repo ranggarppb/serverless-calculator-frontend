@@ -33,6 +33,7 @@ function reducer(state, { type, payload }) {
 	  	if (state.operation) {
 			const newListOperation = [...state.listOperation]
 			newListOperation.push(state.operation)
+			
 			return {
 				...state,
 				currentOperand: `${state.currentOperand || ""}${payload.digit}`,
@@ -46,7 +47,7 @@ function reducer(state, { type, payload }) {
 			  }
 		}
     case ACTIONS.ADD_OPERATION:
-		if (state.currentOperand) {
+		if (state.currentOperand || state.currentOperand === 0) {
 			const newListOperand = [...state.listOperand, state.currentOperand]
 			return {
 				...state,
