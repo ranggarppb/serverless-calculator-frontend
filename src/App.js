@@ -115,7 +115,7 @@ function reducer(state, { type, payload }) {
 			  overwrite: true,
 			  operation: null,
 			  currentOperand: 0,
-			  calculationResult: payload.calculationResult
+			  calculationResult: trimCalculationResult(payload.calculationResult)
 		  }
 			
 	default:
@@ -123,6 +123,12 @@ function reducer(state, { type, payload }) {
   }
 }
 
+function trimCalculationResult(result) {
+	if (result.length > 18) {
+		return result.slice(0,18)
+	} 
+	return result
+}
 
 function evaluate(currentOperand, operation, listOperand, listOperation, calculationResult) {
 	if (calculationResult) {
