@@ -30,6 +30,14 @@ function reducer(state, { type, payload }) {
 			return state
 		}
 
+		if (payload.digit === "-.." && state.currentOperand) {
+			return state
+		}
+
+		if (payload.digit === "-..") {
+			payload.digit = "-"
+		}
+
 	  	if (state.operation) {
 			const newListOperation = [...state.listOperation]
 			newListOperation.push(state.operation)
@@ -277,7 +285,7 @@ function App() {
 	  <button onClick={createCalculationSingleInput}>x²</button>
 	  <button onClick={createCalculationSingleInput}>√x</button>
 	  <button onClick={createCalculationSingleInput}>rep</button>
-	  <button onClick={createCalculationSingleInput}>-..</button>
+	  <DigitButton digit="-.." dispatch={dispatch} />
 	  <button onClick={createCalculationSingleInput}>x³</button>
 	  <button onClick={createCalculationSingleInput}>∛x</button>
       <DigitButton digit="." dispatch={dispatch} />
