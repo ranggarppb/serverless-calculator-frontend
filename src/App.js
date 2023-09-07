@@ -1,149 +1,166 @@
-import { useReducer } from "react"
+import { useReducer, useCallback } from "react"
 import DigitButton from "./DigitButton"
 import OperationButton from "./OperationButton"
 import "./styles.css"
 
 export const ACTIONS = {
-  ADD_DIGIT: "add-digit",
-  CHOOSE_OPERATION: "choose-operation",
+  ADD_ELEMENT: "add-digit",
+  ADD_OPERATION: "add-operation",
   CLEAR: "clear",
   DELETE_DIGIT: "delete-digit",
   EVALUATE: "evaluate",
 }
 
 function reducer(state, { type, payload }) {
-  switch (type) {
+	let res
+	switch (type) {
     case ACTIONS.ADD_DIGIT:
-      if (state.overwrite) {
-        return {
-          ...state,
-          currentOperand: payload.digit,
-          overwrite: false,
-        }
-      }
-      if (payload.digit === "0" && state.currentOperand === "0") {
-        return state
-      }
-      if (payload.digit === "." && state.currentOperand.includes(".")) {
-        return state
-      }
+		if (state.overwrite) {
+			return {
+			...state,
+			currentOperand: payload.digit,
+			overwrite: false,
+			}
+      	}
+		if (payload.digit === "0" && state.currentOperand === "0") {
+			return state
+		}
+		if (payload.digit === "." && state.currentOperand.includes(".")) {
+			return state
+		}
 
-      return {
-        ...state,
-        currentOperand: `${state.currentOperand || ""}${payload.digit}`,
-      }
-    case ACTIONS.CHOOSE_OPERATION:
-      if (state.currentOperand == null && state.previousOperand == null) {
-        return state
-      }
+      	res =  {
+			...state,
+			currentOperand: `${state.currentOperand || ""}${payload.digit}`,
+	  	}
 
-      if (state.currentOperand == null) {
-        return {
-          ...state,
-          operation: payload.operation,
-        }
-      }
+	  	if (state.operation) {
+			const newListOperation = [...state.listOperation]
+			newListOperation.push(state.operation)
+			state.listOperation = newListOperation
+			state.operation = null
+		}
 
-      if (state.previousOperand == null) {
-        return {
-          ...state,
-          operation: payload.operation,
-          previousOperand: state.currentOperand,
-          currentOperand: null,
-        }
-      }
-
-      return {
-        ...state,
-        previousOperand: evaluate(state),
-        operation: payload.operation,
-        currentOperand: null,
-      }
+	  	return res
+      
+    case ACTIONS.ADD_OPERATION:
+		res = {
+			...state,
+        	operation: payload.operation,
+		}
+		if (state.currentOperand) {
+			state.listOperand.push(state.currentOperand)
+			state.currentOperand = null
+		}
+		return res
     case ACTIONS.CLEAR:
-      return {}
+      	return {currentOperand: 0, listOperand: [], listOperation: []}
     case ACTIONS.DELETE_DIGIT:
-      if (state.overwrite) {
-        return {
-          ...state,
-          overwrite: false,
-          currentOperand: null,
-        }
-      }
-      if (state.currentOperand == null) return state
-      if (state.currentOperand.length === 1) {
-        return { ...state, currentOperand: null }
-      }
+      	if (state.overwrite) {
+        	return {
+				...state,
+				overwrite: false,
+        	}
+      	}
+      	if (state.currentOperand === 0) return state
+		if (state.currentOperand.length === 0 && state.listOperation.length > 0 && state.listOperand.length > 0) {
+			let operandToBeRemoved = state.listOperand[state.listOperand.length - 1]
+			let newListOperation = [...state.listOperation]
+			let newListOperand = [...state.listOperand]
+			newListOperation.splice(-1)
+			newListOperand.splice(-1)
+			return { ...state, operation: null, currentOperand: `${operandToBeRemoved}`, listOperation: newListOperation, listOperand: newListOperand}
+		}
+		if (state.currentOperand.length === 1 && state.listOperation.length === 0) return { ...state, currentOperand: 0}
 
-      return {
-        ...state,
-        currentOperand: state.currentOperand.slice(0, -1),
-      }
+      	return {
+        	...state,
+        	currentOperand: state.currentOperand.slice(0, -1),
+      	}
     case ACTIONS.EVALUATE:
-      if (
-        state.operation == null ||
-        state.currentOperand == null ||
-        state.previousOperand == null
-      ) {
-        return state
-      }
+      	if (!state.operation && !state.currentOperand) {
+        	return state
+      	}
 
-      return {
-        ...state,
-        overwrite: true,
-        previousOperand: null,
-        operation: null,
-        currentOperand: evaluate(state),
-      }
+		return {
+			...state,
+			overwrite: true,
+			operation: null,
+			currentOperand: 0,
+			calculationResult: payload.calculationResult
+		}
+			
 	default:
 		return
   }
 }
 
-function evaluate({ currentOperand, previousOperand, operation }) {
-  const prev = parseFloat(previousOperand)
-  const current = parseFloat(currentOperand)
-  if (isNaN(prev) || isNaN(current)) return ""
-  let computation = ""
-  switch (operation) {
-    case "+":
-      computation = prev + current
-      break
-    case "-":
-      computation = prev - current
-      break
-    case "*":
-      computation = prev * current
-      break
-    case "÷":
-      computation = prev / current
-      break
-	default:
-	  break
+
+function evaluate(currentOperand, operation, listOperand, listOperation, calculationResult) {
+	if (calculationResult) {
+		return calculationResult
+	}
+
+	let res = []
+	for (let i = 0; i < listOperand.length; i++) {
+		res.push(listOperand[i], listOperation[i])
+	}
+
+	return res.join(" ") + ` ${currentOperand || currentOperand === 0 ? currentOperand : ''} ${operation ? operation : ''}`
+}
+
+function isPromise(obj) {
+	return (
+	  !!obj &&
+	  (typeof obj === "object" || typeof obj === "function") &&
+	  typeof obj.then === "function"
+	);
   }
 
-  return computation.toString()
-}
-
-const INTEGER_FORMATTER = new Intl.NumberFormat("en-us", {
-  maximumFractionDigits: 0,
-})
-function formatOperand(operand) {
-  if (operand == null) return 0
-  const [integer, decimal] = operand.split(".")
-  if (decimal == null) return INTEGER_FORMATTER.format(integer)
-  return `${INTEGER_FORMATTER.format(integer)}.${decimal}`
-}
 
 function App() {
-  const [{ currentOperand }, dispatch] = useReducer(
+  const [{ currentOperand, operation, listOperand, listOperation, calculationResult }, dispatch] = useReducer(
     reducer,
-    {}
+    {currentOperand: 0, listOperand: [], listOperation: []}
   )
+
+  const createCalculation = useCallback(async () => {	
+	let input = evaluate(currentOperand, operation, listOperand, listOperation).split(" ")
+	input = input.filter(n => n)
+
+	const inputMapped = input.map((i) => {
+		switch(i) {
+			case "+":
+				return "add"
+			case "-":
+				return "substract"
+			case "*":
+				return "multiply"
+			case "÷":
+				return "divide"
+			default:
+				return i
+		}
+	})
+
+	const inputCombined = inputMapped.join(" ")
+	const requestOptions = {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ input: inputCombined })
+	};
+	const res = await fetch('https://asia-southeast2-serverless-calculator.cloudfunctions.net/serverless-calculator/calculation', requestOptions)
+
+	const result = await res.json()
+
+	dispatch({ type: ACTIONS.EVALUATE,  payload: { calculationResult: result.result } })
+
+  }, [currentOperand, operation, listOperand, listOperation])
 
   return (
     <div className="calculator-grid">
       <div className="output">
-        <div className="current-operand">{formatOperand(currentOperand)}</div>
+        <div className="current-operand">{evaluate(currentOperand, operation, listOperand, listOperation, calculationResult)}</div>
       </div>
       <button
         className="span-two"
@@ -175,7 +192,7 @@ function App() {
       <DigitButton digit="0" dispatch={dispatch} />
       <button
         className="span-two"
-        onClick={() => dispatch({ type: ACTIONS.EVALUATE })}
+        onClick={createCalculation}
       >
         =
       </button>
