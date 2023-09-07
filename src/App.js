@@ -158,12 +158,21 @@ function App() {
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify({ input: `${operator} ${calculationResult}`})
 	};
-	const res = await fetch('https://asia-southeast2-serverless-calculator.cloudfunctions.net/serverless-calculator/calculation', requestOptions)
 
-	const result = await res.json()
+	try {
+		const res = await fetch('https://asia-southeast2-serverless-calculator.cloudfunctions.net/serverless-calculator/calculation', requestOptions)
 
-	dispatch({ type: ACTIONS.OPERATION_EVALUATE,  payload: { calculationResult: result.result } })
+		const result = await res.json()
 
+		if (result.error_code) {
+			throw new Error(`${result.error_code}: ${result.error_message}`)
+		}
+
+		dispatch({ type: ACTIONS.OPERATION_EVALUATE,  payload: { calculationResult: result.result } })
+	} catch(e) {
+		alert(e.message)
+	}
+	
   }, [calculationResult])
 
   const createCalculation = useCallback(async () => {	
@@ -191,11 +200,21 @@ function App() {
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify({ input: inputCombined })
 	};
-	const res = await fetch('https://asia-southeast2-serverless-calculator.cloudfunctions.net/serverless-calculator/calculation', requestOptions)
 
-	const result = await res.json()
+	try {
+		const res = await fetch('https://asia-southeast2-serverless-calculator.cloudfunctions.net/serverless-calculator/calculation', requestOptions)
 
-	dispatch({ type: ACTIONS.EVALUATE,  payload: { calculationResult: result.result } })
+		const result = await res.json()
+
+		if (result.error_code) {
+			throw new Error(`${result.error_code}: ${result.error_message}`)
+		}
+
+		dispatch({ type: ACTIONS.EVALUATE,  payload: { calculationResult: result.result } })
+	} catch (e) {
+		alert(e.message)
+	}
+	
 
   }, [currentOperand, operation, listOperand, listOperation])
 
