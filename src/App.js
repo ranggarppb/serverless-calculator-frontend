@@ -109,15 +109,6 @@ function evaluate(currentOperand, operation, listOperand, listOperation, calcula
 	return res.join(" ") + ` ${currentOperand || currentOperand === 0 ? currentOperand : ''} ${operation ? operation : ''}`
 }
 
-function isPromise(obj) {
-	return (
-	  !!obj &&
-	  (typeof obj === "object" || typeof obj === "function") &&
-	  typeof obj.then === "function"
-	);
-  }
-
-
 function App() {
   const [{ currentOperand, operation, listOperand, listOperation, calculationResult }, dispatch] = useReducer(
     reducer,
