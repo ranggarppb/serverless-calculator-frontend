@@ -131,9 +131,7 @@ function App() {
   )
 
   const createCalculationSingleInput = useCallback(async (content) => {
-		
-	if (!calculationResult) return
-	
+			
 	let operator 
 
 	switch(content.target.innerHTML) {
@@ -152,11 +150,15 @@ function App() {
 		default:
 			return
 	}
+
+	let input = evaluate(currentOperand, operation, listOperand, listOperation).split(" ")
+	input = input.filter(n => n)
+	const inputCombined = input.join(" ")
 	
 	const requestOptions = {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ input: `${operator} ${calculationResult}`})
+		body: JSON.stringify({ input: `${operator} ${calculationResult ? calculationResult : inputCombined}`})
 	};
 
 	try {
@@ -173,7 +175,7 @@ function App() {
 		alert(e.message)
 	}
 	
-  }, [calculationResult])
+  }, [currentOperand, operation, listOperand, listOperation, calculationResult])
 
   const createCalculation = useCallback(async () => {	
 	let input = evaluate(currentOperand, operation, listOperand, listOperation).split(" ")
