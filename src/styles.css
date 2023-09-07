@@ -12,7 +12,7 @@
 	margin-top: 2rem;
 	justify-content: center;
 	grid-template-columns: repeat(4, 6rem);
-	grid-template-rows: minmax(7rem, auto) repeat(6, 6rem);
+	grid-template-rows: minmax(7rem, auto) repeat(7, 6rem);
   }
   
   .calculator-grid > button {

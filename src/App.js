@@ -109,6 +109,7 @@ function reducer(state, { type, payload }) {
 			listOperation: []
 		}
 	case ACTIONS.OPERATION_EVALUATE:
+		  
 		  return {
 			  ...state,
 			  overwrite: true,
@@ -158,6 +159,12 @@ function App() {
 			break;
 		case "√x":
 			operator = "sqrt"
+			break;
+		case "x³":
+			operator = "cube"
+			break;
+		case "∛x":
+			operator = "cubert"
 			break;
 		default:
 			return
@@ -263,6 +270,10 @@ function App() {
 	  <button onClick={createCalculationSingleInput}>-x</button>
 	  <button onClick={createCalculationSingleInput}>x²</button>
 	  <button onClick={createCalculationSingleInput}>√x</button>
+	  <button onClick={createCalculationSingleInput}>rep</button>
+	  <button onClick={createCalculationSingleInput}>-..</button>
+	  <button onClick={createCalculationSingleInput}>x³</button>
+	  <button onClick={createCalculationSingleInput}>∛x</button>
       <DigitButton digit="." dispatch={dispatch} />
       <DigitButton digit="0" dispatch={dispatch} />
       <button
