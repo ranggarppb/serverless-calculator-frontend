@@ -6,12 +6,14 @@ import "./styles.css"
 export const ACTIONS = {
   ADD_ELEMENT: "add-digit",
   ADD_OPERATION: "add-operation",
+  GET_RESULT_OPERATION: "get-result-operation",
   CLEAR: "clear",
   DELETE_DIGIT: "delete-digit",
   EVALUATE: "evaluate",
+  OPERATION_EVALUATE: "operation-evaluate"
 }
 
-function reducer(state, { type, payload }) {
+function reducer(state, { type, payload }) {	
 	switch (type) {
     case ACTIONS.ADD_DIGIT:
 		if (state.overwrite) {
@@ -94,6 +96,14 @@ function reducer(state, { type, payload }) {
 			currentOperand: 0,
 			calculationResult: payload.calculationResult
 		}
+	case ACTIONS.OPERATION_EVALUATE:
+		  return {
+			  ...state,
+			  overwrite: true,
+			  operation: null,
+			  currentOperand: 0,
+			  calculationResult: payload.calculationResult
+		  }
 			
 	default:
 		return
@@ -105,8 +115,6 @@ function evaluate(currentOperand, operation, listOperand, listOperation, calcula
 	if (calculationResult) {
 		return calculationResult
 	}
-
-	console.log(currentOperand, operation, listOperand, listOperation)
 
 	let res = []
 	for (let i = 0; i < listOperand.length; i++) {
@@ -121,6 +129,42 @@ function App() {
     reducer,
     {currentOperand: 0, listOperand: [], listOperation: []}
   )
+
+  const createCalculationSingleInput = useCallback(async (content) => {
+		
+	if (!calculationResult) return
+	
+	let operator 
+
+	switch(content.target.innerHTML) {
+		case "|x|":
+			operator = "abs"
+			break;
+		case "-x":
+			operator = "neg"
+			break;
+		case "x²":
+			operator =  "sqr"
+			break;
+		case "√x":
+			operator = "sqrt"
+			break;
+		default:
+			return
+	}
+	
+	const requestOptions = {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ input: `${operator} ${calculationResult}`})
+	};
+	const res = await fetch('https://asia-southeast2-serverless-calculator.cloudfunctions.net/serverless-calculator/calculation', requestOptions)
+
+	const result = await res.json()
+
+	dispatch({ type: ACTIONS.OPERATION_EVALUATE,  payload: { calculationResult: result.result } })
+
+  }, [calculationResult])
 
   const createCalculation = useCallback(async () => {	
 	let input = evaluate(currentOperand, operation, listOperand, listOperation).split(" ")
@@ -182,10 +226,10 @@ function App() {
       <DigitButton digit="8" dispatch={dispatch} />
       <DigitButton digit="9" dispatch={dispatch} />
       <OperationButton operation="-" dispatch={dispatch} />
-	  <DigitButton digit="|x|" dispatch={dispatch} />
-      <DigitButton digit="-x" dispatch={dispatch} />
-      <DigitButton digit="x²" dispatch={dispatch} />
-      <OperationButton operation="√x" dispatch={dispatch} />
+	  <button onClick={createCalculationSingleInput}>|x|</button>
+	  <button onClick={createCalculationSingleInput}>-x</button>
+	  <button onClick={createCalculationSingleInput}>x²</button>
+	  <button onClick={createCalculationSingleInput}>√x</button>
       <DigitButton digit="." dispatch={dispatch} />
       <DigitButton digit="0" dispatch={dispatch} />
       <button
