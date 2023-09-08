@@ -88,6 +88,11 @@ function reducer(state, { type, payload }) {
         	}
       	}
       	if (state.currentOperand === 0) return state
+		if (state.currentOperand == null && state.listOperand.length > 0) {
+			const newListOperand = [...state.listOperand]
+			newListOperand.splice(-1)
+			return { ...state, operation: null, currentOperand: state.listOperand[state.listOperand.length-1], listOperand: newListOperand }
+		}
 		if (state.currentOperand.length === 0 && state.listOperation.length > 0 && state.listOperand.length > 0) {
 			let operandToBeRemoved = state.listOperand[state.listOperand.length - 1]
 			let newListOperation = [...state.listOperation]
@@ -96,6 +101,7 @@ function reducer(state, { type, payload }) {
 			newListOperand.splice(-1)
 			return { ...state, operation: null, currentOperand: `${operandToBeRemoved}`, listOperation: newListOperation, listOperand: newListOperand}
 		}
+
 		if (state.currentOperand.length === 1 && state.listOperation.length === 0) return { ...state, currentOperand: 0}
 
       	return {
