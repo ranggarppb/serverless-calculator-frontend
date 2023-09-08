@@ -15,8 +15,20 @@ export const ACTIONS = {
 
 function reducer(state, { type, payload }) {	
 	switch (type) {
-    case ACTIONS.ADD_DIGIT:
+    case ACTIONS.ADD_DIGIT:	
 		if (state.overwrite) {
+			if (payload.digit === "rep") {
+				return {
+					...state,
+					operation: null,
+					currentOperand: "repeat ",
+					calculationResult: state.calculationResult,
+					listOperand: [],
+					listOperation: [],
+					overwrite: false
+				}
+			}
+			
 			return {
 			...state,
 			currentOperand: payload.digit,
@@ -38,6 +50,10 @@ function reducer(state, { type, payload }) {
 			payload.digit = "-"
 		}
 
+		if (payload.digit === "rep") {
+			return state
+		}
+
 	  	if (state.operation) {
 			const newListOperation = [...state.listOperation]
 			newListOperation.push(state.operation)
@@ -48,7 +64,7 @@ function reducer(state, { type, payload }) {
 				listOperation: newListOperation,
 				operation: null
 			  }
-		} else {
+		} else {			
 			return {
 				...state,
 				currentOperand: `${state.currentOperand || ""}${payload.digit}`,
@@ -79,7 +95,7 @@ function reducer(state, { type, payload }) {
 			}
 		}
     case ACTIONS.CLEAR:
-      	return {currentOperand: 0, listOperand: [], listOperation: []}
+      	return {currentOperand: 0, listOperand: [], listOperation: [], listCalculation: []}
     case ACTIONS.DELETE_DIGIT:
       	if (state.overwrite) {
         	return {
@@ -144,8 +160,8 @@ function trimCalculationResult(result) {
 	return result
 }
 
-function evaluate(currentOperand, operation, listOperand, listOperation, calculationResult) {
-	if (calculationResult) {
+function evaluate(currentOperand, operation, listOperand, listOperation, calculationResult, overwrite) {
+	if (calculationResult && overwrite) {
 		return calculationResult
 	}
 
@@ -158,9 +174,9 @@ function evaluate(currentOperand, operation, listOperand, listOperation, calcula
 }
 
 function App() {
-  const [{ currentOperand, operation, listOperand, listOperation, calculationResult }, dispatch] = useReducer(
+  const [{ currentOperand, operation, listOperand, listOperation, calculationResult, listCalculation, overwrite }, dispatch] = useReducer(
     reducer,
-    {currentOperand: 0, listOperand: [], listOperation: []}
+    {currentOperand: 0, listOperand: [], listOperation: [], listCalculation: []}
   )
 
   const createCalculationSingleInput = useCallback(async (content) => {
@@ -190,7 +206,7 @@ function App() {
 			return
 	}
 
-	let input = evaluate(currentOperand, operation, listOperand, listOperation).split(" ")
+	let input = evaluate(currentOperand, operation, listOperand, listOperation, overwrite).split(" ")
 	input = input.filter(n => n)
 	const inputCombined = input.join(" ")
 	
@@ -209,15 +225,61 @@ function App() {
 			throw new Error(`${result.error_code}: ${result.error_message}`)
 		}
 
+		listCalculation.push(result.input)
+
 		dispatch({ type: ACTIONS.OPERATION_EVALUATE,  payload: { calculationResult: result.result } })
 	} catch(e) {
 		alert(e.message)
 	}
 	
-  }, [currentOperand, operation, listOperand, listOperation, calculationResult])
+  }, [currentOperand, operation, listOperand, listOperation, calculationResult, listCalculation, overwrite])
 
   const createCalculation = useCallback(async () => {	
-	let input = evaluate(currentOperand, operation, listOperand, listOperation).split(" ")
+	if (currentOperand && currentOperand.split(" ")[0] === "repeat") {
+		const history = currentOperand.split(" ")[1]
+		if (listCalculation.length >= parseInt(history)) {
+			const operation = listCalculation[listCalculation.length - parseInt(history)].split(" ")
+			let input
+			if (["abs", "neg", "sqr", "sqrt", "cube", "cubert"].includes(operation[0])) {
+				input = `${operation[0]} ${calculationResult}`
+			} else {
+				operation[0] = calculationResult
+				input = operation.join(" ")
+			}
+
+			const requestOptions = {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ input: input })
+			};
+
+			try {
+				const res = await fetch('https://asia-southeast2-serverless-calculator.cloudfunctions.net/serverless-calculator/calculation', requestOptions)
+
+				const result = await res.json()
+
+				if (result.error_code) {
+					throw new Error(`${result.error_code}: ${result.error_message}`)
+				}
+
+				listCalculation.push(result.input)
+
+				dispatch({ type: ACTIONS.EVALUATE,  payload: { calculationResult: result.result } })
+
+				return
+			} catch (e) {
+				alert(e.message)
+
+				return
+			}
+		} else {
+			alert("Your calculation history is less than your input")
+
+			return
+		}
+	}
+	
+	let input = evaluate(currentOperand, operation, listOperand, listOperation, overwrite).split(" ")
 	input = input.filter(n => n)
 
 	const inputMapped = input.map((i) => {
@@ -251,18 +313,20 @@ function App() {
 			throw new Error(`${result.error_code}: ${result.error_message}`)
 		}
 
+		listCalculation.push(result.input)
+
 		dispatch({ type: ACTIONS.EVALUATE,  payload: { calculationResult: result.result } })
 	} catch (e) {
 		alert(e.message)
 	}
 	
 
-  }, [currentOperand, operation, listOperand, listOperation])
+  }, [currentOperand, operation, listOperand, listOperation, listCalculation, calculationResult, overwrite])
 
   return (
     <div className="calculator-grid">
       <div className="output">
-        <div className="current-operand">{evaluate(currentOperand, operation, listOperand, listOperation, calculationResult)}</div>
+        <div className="current-operand">{evaluate(currentOperand, operation, listOperand, listOperation, calculationResult, overwrite)}</div>
       </div>
       <button
         className="span-two"
@@ -290,7 +354,7 @@ function App() {
 	  <button onClick={createCalculationSingleInput}>-x</button>
 	  <button onClick={createCalculationSingleInput}>x²</button>
 	  <button onClick={createCalculationSingleInput}>√x</button>
-	  <button onClick={createCalculationSingleInput}>rep</button>
+	  <DigitButton digit="rep" dispatch={dispatch} />
 	  <DigitButton digit="-.." dispatch={dispatch} />
 	  <button onClick={createCalculationSingleInput}>x³</button>
 	  <button onClick={createCalculationSingleInput}>∛x</button>
