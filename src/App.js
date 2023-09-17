@@ -287,7 +287,7 @@ function App() {
 			case "+":
 				return "add"
 			case "-":
-				return "substract"
+				return "subtract"
 			case "*":
 				return "multiply"
 			case "÷":
